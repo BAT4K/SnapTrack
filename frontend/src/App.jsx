@@ -95,7 +95,7 @@ function Dashboard() {
         setUploadProgress(50);
         const bucketName = new URL(uploadUrl).hostname.split('.')[0];
         
-        const processResponse = await fetch(API_URL, {
+        const processResponse = await fetch(`${BASE_API}/process`, {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${token}`,
