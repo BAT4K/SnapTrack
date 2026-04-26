@@ -1,0 +1,9 @@
+{
+  "name": "step3-save-to-database",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.500.0",
+    "aws-xray-sdk-core": "^3.5.0"
+  }
+}

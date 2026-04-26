@@ -64,6 +64,11 @@ aws iam attach-role-policy \
     --role-name "$ROLE_NAME" \
     --policy-arn "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole" > /dev/null
 
+echo "Attaching X-Ray trace write permissions..."
+aws iam attach-role-policy \
+    --role-name "$ROLE_NAME" \
+    --policy-arn "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess" > /dev/null
+
 ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
 
 echo "Creating inline policy for S3 GetObject, SSM GetParameter, and DynamoDB PutItem..."
@@ -117,6 +122,15 @@ cd ../../../
 LAMBDA_NAME="SnapTrackProcessReceipt-$RANDOM"
 echo "Deploying Lambda function: $LAMBDA_NAME..."
 
+# Build environment variables safely to avoid AWS CLI errors on empty values
+ENV_VARS="{"
+[ -n "$GEMINI_API_KEY" ] && ENV_VARS="${ENV_VARS}GEMINI_API_KEY=$GEMINI_API_KEY,"
+[ -n "$GROQ_API_KEY" ] && ENV_VARS="${ENV_VARS}GROQ_API_KEY=$GROQ_API_KEY,"
+[ -n "$TELEGRAM_BOT_TOKEN" ] && ENV_VARS="${ENV_VARS}TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN,"
+[ -n "$TELEGRAM_CHAT_ID" ] && ENV_VARS="${ENV_VARS}TELEGRAM_CHAT_ID=$TELEGRAM_CHAT_ID,"
+ENV_VARS="${ENV_VARS%,}}"
+[ "$ENV_VARS" = "}" ] && ENV_VARS="{}"
+
 aws lambda create-function \
     --function-name "$LAMBDA_NAME" \
     --runtime "nodejs20.x" \
@@ -125,7 +139,8 @@ aws lambda create-function \
     --zip-file "fileb://process-function.zip" \
     --timeout 30 \
     --memory-size 256 \
-    --environment "Variables={GEMINI_API_KEY=$GEMINI_API_KEY,GROQ_API_KEY=$GROQ_API_KEY,TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN,TELEGRAM_CHAT_ID=$TELEGRAM_CHAT_ID}" > /dev/null
+    --tracing-config Mode=Active \
+    --environment "Variables=$ENV_VARS" > /dev/null
 
 rm process-function.zip
 

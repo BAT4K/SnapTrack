@@ -12,6 +12,7 @@ function Dashboard() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef(null);
+  const [successMsg, setSuccessMsg] = useState(null);
 
   // Daily Target Tracker states
   const [baseTarget, setBaseTarget] = useState(2200);
@@ -62,6 +63,7 @@ function Dashboard() {
 
     setUploading(true);
     setError(null);
+    setSuccessMsg(null);
     setUploadProgress(0);
     
     try {
@@ -89,20 +91,33 @@ function Dashboard() {
 
         if (!uploadResponse.ok) throw new Error('DATA STREAM TRANSFER FAILED');
 
-        // 3. Wait for processing (5-8 seconds for Gemini)
-        setUploadProgress(30); 
+        // 3. Trigger API Gateway Proxy to Step Function
+        setUploadProgress(50);
+        const bucketName = new URL(uploadUrl).hostname.split('.')[0];
         
-        // Simple progress simulation
-        const interval = setInterval(() => {
-            setUploadProgress(prev => Math.min(prev + 10, 95));
-        }, 800);
+        const processResponse = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ bucket: bucketName, key: key })
+        });
 
-        await new Promise(resolve => setTimeout(resolve, 6000));
-        clearInterval(interval);
+        if (!processResponse.ok) {
+            const errBody = await processResponse.json().catch(() => ({}));
+            throw new Error(`PROCESSING FAILED: ${errBody.message || processResponse.statusText}`);
+        }
+
         setUploadProgress(100);
-
-        // 4. Refresh meals
-        await fetchMeals();
+        const newMeal = await processResponse.json();
+        
+        // Instant UI Update
+        setMeals(prev => [newMeal, ...prev]);
+        
+        // Temporary Success Message
+        setSuccessMsg(`Receipt processed! Added ${newMeal.totalCalories || 0} KCAL.`);
+        setTimeout(() => setSuccessMsg(null), 5000);
         
     } catch (err) {
         setError(err.message);
@@ -233,6 +248,14 @@ function Dashboard() {
           </div>
         </div>
       </section>
+
+      {successMsg && (
+        <div className="bg-accent/20 border border-accent p-6 animate-slide-up delay-100 relative overflow-hidden mb-8">
+          <div className="absolute top-0 left-0 w-1 h-full bg-accent"></div>
+          <h2 className="display-font text-3xl text-accent mb-2">OPERATION SUCCESSFUL</h2>
+          <p className="text-white font-mono text-sm uppercase">{successMsg}</p>
+        </div>
+      )}
 
       {/* Upload Component */}
       <section className="mb-12 animate-slide-up delay-100">

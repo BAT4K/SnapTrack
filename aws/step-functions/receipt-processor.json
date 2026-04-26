@@ -1,0 +1,29 @@
+{
+  "Comment": "SnapTrack AI Receipt Processing Pipeline",
+  "StartAt": "ExtractImage",
+  "States": {
+    "ExtractImage": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:step1_extractImage",
+      "Next": "AnalyzeCalories"
+    },
+    "AnalyzeCalories": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:step2_analyzeCalories",
+      "Next": "SaveToDatabase",
+      "Retry": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 2,
+          "BackoffRate": 2.0
+        }
+      ]
+    },
+    "SaveToDatabase": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:step3_saveToDatabase",
+      "End": true
+    }
+  }
+}

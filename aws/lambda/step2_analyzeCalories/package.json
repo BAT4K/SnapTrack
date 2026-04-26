@@ -1,0 +1,11 @@
+{
+  "name": "step2-analyze-calories",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-ssm": "^3.500.0",
+    "@google/generative-ai": "^0.21.0",
+    "@azure/ai-form-recognizer": "^5.0.0",
+    "aws-xray-sdk-core": "^3.5.0"
+  }
+}
