@@ -1,0 +1,10 @@
+{
+  "name": "snaptrack-get-meals",
+  "version": "1.0.0",
+  "description": "SnapTrack AI Retrieval Lambda for fetching meals",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.500.0",
+    "@aws-sdk/util-dynamodb": "^3.500.0"
+  }
+}

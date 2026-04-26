@@ -1,0 +1,162 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-color: #0a0a0a;
+  --surface-color: #141414;
+  --surface-border: #2a2a2a;
+  --text-primary: #f0f0f0;
+  --text-secondary: #888888;
+  --accent-color: #FF5F1F; /* Neon Safety Orange */
+  --accent-hover: #ff7a45;
+  --danger: #ef4444;
+
+  /* AWS Amplify Authenticator Overrides */
+  --amplify-colors-background-primary: var(--bg-color);
+  --amplify-colors-background-secondary: var(--surface-color);
+  --amplify-colors-font-primary: var(--text-primary);
+  --amplify-colors-font-secondary: var(--text-secondary);
+  --amplify-colors-font-interactive: var(--accent-color);
+  --amplify-colors-brand-primary-10: var(--surface-border);
+  --amplify-colors-brand-primary-80: var(--accent-color);
+  --amplify-colors-brand-primary-90: var(--accent-hover);
+  --amplify-colors-brand-primary-100: var(--accent-color);
+  --amplify-colors-border-primary: var(--surface-border);
+  --amplify-colors-border-secondary: var(--surface-border);
+  --amplify-colors-border-focus: var(--accent-color);
+  --amplify-components-button-primary-background-color: var(--accent-color);
+  --amplify-components-button-primary-hover-background-color: var(--accent-hover);
+  --amplify-components-button-link-color: var(--accent-color);
+  --amplify-components-tabs-item-active-border-color: var(--accent-color);
+  --amplify-components-tabs-item-active-color: var(--accent-color);
+  --amplify-fonts-default-variable: 'JetBrains Mono', monospace;
+  --amplify-radii-small: 0;
+  --amplify-radii-medium: 0;
+  --amplify-radii-large: 0;
+  --amplify-radii-xl: 0;
+  --amplify-radii-xxl: 0;
+  --amplify-border-widths-small: 1px;
+  --amplify-border-widths-medium: 1px;
+  --amplify-border-widths-large: 2px;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  background-image: radial-gradient(var(--surface-border) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.display-font {
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.05em;
+}
+
+/* Animations */
+@keyframes slideUpFade {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Delay classes for staggered animation */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+
+/* Grid styling */
+.industrial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  grid-auto-flow: dense;
+}
+
+/* Make every 3rd card span 2 columns if screen is wide enough */
+@media (min-width: 768px) {
+  .industrial-grid > div:nth-child(3n+1) {
+    grid-column: span 2;
+  }
+}
+
+.industrial-card {
+  background: var(--surface-color);
+  border: 1px solid var(--surface-border);
+  position: relative;
+  overflow: hidden;
+}
+
+.industrial-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--accent-color);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 0.3s ease;
+}
+
+.industrial-card:hover::before {
+  transform: scaleY(1);
+}
+
+
+.industrial-button {
+  background: transparent;
+  color: var(--accent-color);
+  border: 1px solid var(--accent-color);
+  text-transform: uppercase;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.industrial-button:hover {
+  background: var(--accent-color);
+  color: var(--bg-color);
+}
+
+/* Make Authenticator look more raw */
+[data-amplify-authenticator] {
+  border: 1px solid var(--surface-border) !important;
+  box-shadow: 8px 8px 0px rgba(255, 95, 31, 0.2) !important;
+  background-color: var(--surface-color) !important;
+  max-width: 460px;
+  margin: 40px auto;
+}
+
+[data-amplify-authenticator] [data-amplify-router] {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+[data-amplify-authenticator] input {
+  background: var(--bg-color) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--surface-border) !important;
+  border-radius: 0 !important;
+}
+
+[data-amplify-authenticator] input:focus {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 1px var(--accent-color) !important;
+}

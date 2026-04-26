@@ -1,0 +1,10 @@
+{
+  "name": "snaptrack-get-upload-url",
+  "version": "1.0.0",
+  "description": "Lambda for generating presigned S3 upload URLs",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.500.0",
+    "@aws-sdk/s3-request-presigner": "^3.500.0"
+  }
+}

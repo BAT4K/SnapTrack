@@ -1,0 +1,11 @@
+{
+  "name": "weekly-report",
+  "version": "1.0.0",
+  "description": "Weekly report for SnapTrack AI",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.0.0",
+    "@aws-sdk/client-ses": "^3.0.0",
+    "@aws-sdk/util-dynamodb": "^3.0.0"
+  }
+}
