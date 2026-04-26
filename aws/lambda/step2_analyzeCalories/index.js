@@ -1,9 +1,11 @@
 const { SSMClient, GetParameterCommand } = require("@aws-sdk/client-ssm");
+const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { AzureKeyCredential, DocumentAnalysisClient } = require("@azure/ai-form-recognizer");
 const AWSXRay = require("aws-xray-sdk-core");
 
 const ssm = new SSMClient();
+const s3 = AWSXRay.captureAWSv3Client(new S3Client({}));
 
 let geminiApiKey = null;
 let azureEndpoint = null;
@@ -12,8 +14,8 @@ let azureApiKey = null;
 exports.handler = async (event) => {
     console.log("Step 2: Analyze Calories triggered", JSON.stringify(event));
     
-    const { bucket, key, imageUrl } = event;
-    if (!imageUrl) throw new Error("Missing imageUrl from Step 1");
+    const { bucket, key } = event;
+    if (!bucket || !key) throw new Error("Missing bucket or key from Step 1");
 
     if (!geminiApiKey) {
         if (process.env.GEMINI_API_KEY) {
@@ -32,11 +34,10 @@ exports.handler = async (event) => {
         azureApiKey = res.Parameter.Value;
     }
 
-    console.log("Downloading image buffer from signed URL...");
-    const imageResponse = await fetch(imageUrl);
-    if (!imageResponse.ok) throw new Error("Failed to download image from S3 signed URL");
-    const arrayBuffer = await imageResponse.arrayBuffer();
-    const imageBuffer = Buffer.from(arrayBuffer);
+    console.log("Downloading image buffer directly from S3 using GetObjectCommand...");
+    const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+    const s3Response = await s3.send(command);
+    const imageBuffer = Buffer.from(await s3Response.Body.transformToByteArray());
 
     console.log("Calling Azure DocumentAnalysisClient...");
     const azureClient = new DocumentAnalysisClient(azureEndpoint, new AzureKeyCredential(azureApiKey));

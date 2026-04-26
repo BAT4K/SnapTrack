@@ -1,9 +1,0 @@
-{
-  "name": "snaptrack-ingest-image",
-  "version": "1.0.0",
-  "description": "SnapTrack AI Ingestion Lambda for uploading receipt images to S3",
-  "main": "index.js",
-  "dependencies": {
-    "@aws-sdk/client-s3": "^3.500.0"
-  }
-}

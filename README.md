@@ -38,7 +38,7 @@ flowchart TB
 
     subgraph SFN["🔄 AWS Step Functions (Express)"]
         direction TB
-        S1["Step 1: ExtractImage<br/>S3 Presigned URL Generation"]
+        S1["Step 1: ExtractImage<br/>Payload Validation & S3 Normalization"]
         S2["Step 2: AnalyzeCalories<br/>Azure OCR → Gemini AI"]
         S3["Step 3: SaveToDatabase<br/>DynamoDB Write + Alerts"]
         S1 --> S2
@@ -112,8 +112,8 @@ Instead of a monolithic "Fat Lambda", receipt processing is decomposed into **th
 
 | Step | Lambda | Responsibility |
 |------|--------|----------------|
-| **Step 1** | `step1_extractImage` | Reads the S3 object and generates a short-lived presigned URL for downstream consumption |
-| **Step 2** | `step2_analyzeCalories` | Downloads the image, runs **Azure Document Intelligence** OCR, then passes extracted text to **Google Gemini 2.5 Flash** for macro estimation. Includes automatic **retry (2× with 2s backoff)** on transient failures |
+| **Step 1** | `step1_extractImage` | Parses the event payload, normalizes S3 bucket/key paths, and performs strict image type validation |
+| **Step 2** | `step2_analyzeCalories` | Securely fetches the image buffer directly from S3 using IAM roles, runs **Azure Document Intelligence** OCR, then passes extracted text to **Google Gemini 2.5 Flash** for macro estimation. Includes automatic **retry (2× with 2s backoff)** on transient failures |
 | **Step 3** | `step3_saveToDatabase` | Writes structured nutritional JSON to DynamoDB, scans daily totals, and fires a **Telegram push alert** if the user exceeds their calorie target |
 
 The `ProcessReceipt` Lambda acts as a lightweight **API Gateway Proxy**, invoking the Express Step Function synchronously via `StartSyncExecution` and returning the result directly to the React frontend for **instant UI updates** — no page reload required.

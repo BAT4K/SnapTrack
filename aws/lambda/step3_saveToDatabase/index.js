@@ -72,8 +72,12 @@ exports.handler = async (event) => {
             return sum + (parseInt(item.totalCalories?.N || "0", 10));
         }, 0);
 
+        const currentMealCalories = parseInt(parsedData.totalCalories || 0, 10);
+        const previousDailyTotal = dailyTotal - currentMealCalories;
         const DAILY_TARGET = 2200;
-        if (dailyTotal > DAILY_TARGET) {
+
+        // Edge Trigger: Only fire exactly when crossing the threshold
+        if (previousDailyTotal <= DAILY_TARGET && dailyTotal > DAILY_TARGET) {
             const overage = dailyTotal - DAILY_TARGET;
             await sendTelegramAlert(
                 `🚨 <b>SNAPTRACK ALERT</b>\n\nYou just hit <b>${dailyTotal}</b> kcal today.\nYou are <b>${overage} kcal over</b> your ${DAILY_TARGET} kcal target.`
