@@ -76,7 +76,7 @@ function Dashboard() {
         });
         
         if (!urlResponse.ok) throw new Error('FAILED TO ACQUIRE UPLOAD VECTOR');
-        const { uploadUrl } = await urlResponse.json();
+        const { uploadUrl, key } = await urlResponse.json();
 
         setUploadProgress(10); // Acquired URL
 
