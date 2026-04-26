@@ -4,12 +4,12 @@
   "States": {
     "ExtractImage": {
       "Type": "Task",
-      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:step1_extractImage",
+      "Resource": "arn:aws:lambda:us-east-1:439475769950:function:step1_extractImage",
       "Next": "AnalyzeCalories"
     },
     "AnalyzeCalories": {
       "Type": "Task",
-      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:step2_analyzeCalories",
+      "Resource": "arn:aws:lambda:us-east-1:439475769950:function:step2_analyzeCalories",
       "Next": "SaveToDatabase",
       "Retry": [
         {
@@ -22,7 +22,7 @@
     },
     "SaveToDatabase": {
       "Type": "Task",
-      "Resource": "arn:aws:lambda:REGION:ACCOUNT_ID:function:step3_saveToDatabase",
+      "Resource": "arn:aws:lambda:us-east-1:439475769950:function:step3_saveToDatabase",
       "End": true
     }
   }
