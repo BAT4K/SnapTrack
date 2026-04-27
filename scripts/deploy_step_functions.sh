@@ -15,19 +15,18 @@ fi
 ROLE_ARN=$(aws lambda get-function --function-name "$LAMBDA_NAME" --query "Configuration.Role" --output text)
 echo "Using IAM Role: $ROLE_ARN"
 
-# Load environment variables for Step 2 and Step 3 if available
+# Load overrides from .env if available
 if [ -f .env ]; then
+  echo "Loading .env overrides..."
   source .env
 fi
 
-# Build environment variables safely
-ENV_VARS="{"
-[ -n "$GEMINI_API_KEY" ] && ENV_VARS="${ENV_VARS}GEMINI_API_KEY=$GEMINI_API_KEY,"
-[ -n "$GROQ_API_KEY" ] && ENV_VARS="${ENV_VARS}GROQ_API_KEY=$GROQ_API_KEY,"
-[ -n "$TELEGRAM_BOT_TOKEN" ] && ENV_VARS="${ENV_VARS}TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN,"
-[ -n "$TELEGRAM_CHAT_ID" ] && ENV_VARS="${ENV_VARS}TELEGRAM_CHAT_ID=$TELEGRAM_CHAT_ID,"
-ENV_VARS="${ENV_VARS%,}}"
-[ "$ENV_VARS" = "}" ] && ENV_VARS="{}"
+# Collect .env overrides into an associative array
+declare -A ENV_OVERRIDES
+[ -n "$GEMINI_API_KEY" ] && ENV_OVERRIDES[GEMINI_API_KEY]="$GEMINI_API_KEY"
+[ -n "$GROQ_API_KEY" ] && ENV_OVERRIDES[GROQ_API_KEY]="$GROQ_API_KEY"
+[ -n "$TELEGRAM_BOT_TOKEN" ] && ENV_OVERRIDES[TELEGRAM_BOT_TOKEN]="$TELEGRAM_BOT_TOKEN"
+[ -n "$TELEGRAM_CHAT_ID" ] && ENV_OVERRIDES[TELEGRAM_CHAT_ID]="$TELEGRAM_CHAT_ID"
 
 FUNCTIONS=("step1_extractImage" "step2_analyzeCalories" "step3_saveToDatabase")
 
@@ -47,6 +46,26 @@ for FUNC in "${FUNCTIONS[@]}"; do
     
     cd ../../../
     
+    # ---- Preserve existing environment variables ----
+    # Fetch current env vars from AWS as JSON, then merge with overrides
+    EXISTING_ENV=$(aws lambda get-function-configuration --function-name "$FUNC" --query 'Environment.Variables' --output json 2>/dev/null || echo "null")
+    
+    # Build merged env vars JSON using Python (available on all Lambda-capable systems)
+    MERGED_ENV=$(python3 -c "
+import json, sys
+existing = json.loads('$EXISTING_ENV') if '$EXISTING_ENV' != 'null' else {}
+overrides = json.loads(sys.stdin.read())
+existing.update(overrides)
+print(json.dumps(existing))
+" <<< "$(python3 -c "
+import json
+d = {}
+$(for key in "${!ENV_OVERRIDES[@]}"; do echo "d['$key'] = '${ENV_OVERRIDES[$key]}'"; done)
+print(json.dumps(d))
+")")
+    
+    echo "Environment for $FUNC: $(echo $MERGED_ENV | python3 -c 'import json,sys; d=json.load(sys.stdin); print(", ".join(d.keys()))')"
+    
     # Check if function exists
     if aws lambda get-function --function-name "$FUNC" > /dev/null 2>&1; then
         echo "Updating existing function: $FUNC"
@@ -60,7 +79,7 @@ for FUNC in "${FUNCTIONS[@]}"; do
         aws lambda update-function-configuration \
             --function-name "$FUNC" \
             --role "$ROLE_ARN" \
-            --environment "Variables=$ENV_VARS" \
+            --environment "Variables=$MERGED_ENV" \
             --tracing-config Mode=Active > /dev/null
     else
         echo "Creating new function: $FUNC"
@@ -73,7 +92,7 @@ for FUNC in "${FUNCTIONS[@]}"; do
             --timeout 30 \
             --memory-size 256 \
             --tracing-config Mode=Active \
-            --environment "Variables=$ENV_VARS" > /dev/null
+            --environment "Variables=$MERGED_ENV" > /dev/null
     fi
     
     echo "Cleaning up $ZIP_NAME..."
